@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeechApp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-canvas: #FAF7F2;
+            --panel-bg: rgba(255, 255, 255, 0.6);
+            --panel-border: rgba(61, 44, 53, 0.1);
+            --accent-primary: #F4C2C2;   
+            --accent-secondary: #E8A598; 
+            --accent-cta: #E3D5E8;       
+            --text-main: #3D2C35;       
+            --text-muted: #8A7580;
+            --font-display: 'Outfit', sans-serif;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background:
+                radial-gradient(circle, rgba(61, 44, 53, 0.06) 1px, transparent 1px) 0 0 / 28px 28px,
+                var(--bg-canvas);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .deco-ring {
+            position: fixed;
+            border: 1.5px solid rgba(61, 44, 53, 0.12);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .deco-ring.r1 { width: 140px; height: 140px; top: 8%; right: 10%; }
+        .deco-ring.r2 { width: 90px; height: 90px; bottom: 14%; left: 7%; border-color: rgba(232, 165, 152, 0.5); }
+        .deco-ring.r3 { width: 220px; height: 220px; bottom: -60px; right: -60px; border-color: rgba(227, 213, 232, 0.7); }
+
+        .deco-dot {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .deco-dot.d1 { width: 10px; height: 10px; top: 18%; left: 12%; background: var(--accent-secondary); opacity: 0.6; }
+        .deco-dot.d2 { width: 14px; height: 14px; top: 65%; right: 16%; background: var(--accent-primary); opacity: 0.7; }
+        .deco-dot.d3 { width: 7px; height: 7px; top: 40%; left: 6%; background: var(--text-main); opacity: 0.2; }
+        .deco-dot.d4 { width: 18px; height: 18px; bottom: 8%; right: 30%; background: var(--accent-cta); opacity: 0.6; }
+
+        header {
+            position: relative;
+            z-index: 1;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .brand {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-main) 0%, var(--accent-secondary) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        .toggle-bar {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+            padding: 0.75rem 1.75rem;
+            border-radius: 999px;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn:hover {
+            border-color: rgba(61, 44, 53, 0.25);
+            color: var(--text-main);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--text-main);
+            border-color: transparent;
+            box-shadow: 0 6px 24px rgba(232, 165, 152, 0.45);
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .card.panel { display: none; }
+        .card.panel.active { display: flex; }
+
+        .record-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .record-row .divider {
+            flex: 1;
+            height: 1px;
+            background: rgba(61, 44, 53, 0.12);
+        }
+
+        .record-row .or-text {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-record {
+            width: 100%;
+            background: rgba(232, 165, 152, 0.18);
+            border: 1px solid rgba(232, 165, 152, 0.4);
+            color: var(--text-main);
+        }
+
+        .btn-record:hover {
+            background: rgba(232, 165, 152, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-record.recording {
+            background: var(--accent-secondary);
+            color: #fff;
+            animation: pulse-glow 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(232, 165, 152, 0.6); }
+            50% { box-shadow: 0 0 0 10px rgba(232, 165, 152, 0); }
+        }
+
+        .rec-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--panel-border);
+            border-radius: 22px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(61, 44, 53, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: rgba(61, 44, 53, 0.18);
+            box-shadow: 0 25px 70px rgba(61, 44, 53, 0.18);
+        }
+
+        .card-icon {
+            width: 46px; height: 46px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .icon-stt { background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); }
+        .icon-tts { background: linear-gradient(135deg, var(--accent-cta), var(--accent-primary)); }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: -0.75rem;
+        }
+
+        .file-drop-area {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px dashed rgba(61, 44, 53, 0.2);
+            border-radius: 14px;
+            padding: 2.25rem 1.5rem;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .file-drop-area:hover {
+            border-color: var(--accent-secondary);
+            background: rgba(244, 194, 194, 0.2);
+        }
+
+        .file-input {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer;
+        }
+
+        .file-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; }
+
+        textarea {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(61, 44, 53, 0.15);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 140px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        textarea:focus {
+            border-color: var(--accent-secondary);
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        .btn {
+            border: none;
+            color: var(--text-main);
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+            box-shadow: 0 4px 20px rgba(232, 165, 152, 0.4);
+        }
+
+        .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232, 165, 152, 0.55); }
+
+        .result-box {
+            background: rgba(255, 255, 255, 0.55);
+            border-left: 3px solid var(--accent-secondary);
+            border-radius: 4px 12px 12px 4px;
+            padding: 1rem 1.25rem;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: var(--text-main);
+        }
+
+        .result-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .error-box {
+            border-left-color: #c0555a;
+            color: #a33d42;
+            font-size: 0.85rem;
+        }
+
+        audio { width: 100%; margin-top: 0.5rem; border-radius: 10px; }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding-bottom: 2rem;
+        }
+    </style>
+</head>
+<body data-show-panel="{% if speech_url or tts_error %}tts{% else %}stt{% endif %}">
+    <div class="deco-ring r1"></div>
+    <div class="deco-ring r2"></div>
+    <div class="deco-ring r3"></div>
+    <div class="deco-dot d1"></div>
+    <div class="deco-dot d2"></div>
+    <div class="deco-dot d3"></div>
+    <div class="deco-dot d4"></div>
+
+    <header>
+        <div class="brand">SpeechApp</div>
+        <p class="tagline">Speech to text and text to speech, in one aesthetic little studio.</p>
+    </header>
+
+    <div class="toggle-bar">
+        <button type="button" class="toggle-btn active" id="btn-show-stt" onclick="showPanel('stt')">🎙️ Speech to Text</button>
+        <button type="button" class="toggle-btn" id="btn-show-tts" onclick="showPanel('tts')">🔊 Text to Speech</button>
+    </div>
+
+    <main>
+        <section class="card panel active" id="panel-stt">
+            <div class="card-icon icon-stt">🎙️</div>
+            <h2 class="card-title">Speech to Text</h2>
+            <p class="card-desc">Record on the spot, or upload an audio clip, and get a clean transcript back.</p>
+
+            <button type="button" class="btn btn-record" id="record-btn">
+                <span class="rec-dot"></span>
+                <span id="record-btn-text">Start Recording</span>
+            </button>
+
+            <div class="record-row">
+                <div class="divider"></div>
+                <span class="or-text">or</span>
+                <div class="divider"></div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="stt-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="transcribe">
+                <div class="file-drop-area" id="stt-drop">
+                    <span id="stt-message">Drag & drop audio here or click to browse</span>
+                    <span class="file-hint">MP3, WAV, FLAC, M4A (Max 10MB)</span>
+                    <input type="file" name="audio" id="stt-input" class="file-input" accept="audio/*" required>
+                </div>
+                <button type="submit" class="btn btn-cta" style="margin-top: 1rem; width: 100%;">Transcribe Audio</button>
+            </form>
+
+            {% if transcript %}
+            <div class="result-box">
+                <div class="result-label">Transcript</div>
+                {{ transcript }}
+            </div>
+            {% endif %}
+
+            {% if audio_error %}
+            <div class="result-box error-box">
+                <div class="result-label">Error</div>
+                {{ audio_error }}
+            </div>
+            {% endif %}
+        </section>
+
+
+        <section class="card panel" id="panel-tts">
+            <div class="card-icon icon-tts">🔊</div>
+            <h2 class="card-title">Text to Speech</h2>
+            <p class="card-desc">Type something and turn it into audio.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="speak">
+                <textarea name="text" placeholder="Type or paste text here (max 1000 characters)..." maxlength="1000" required>{{ request.POST.text|default:'' }}</textarea>
+                <button type="submit" class="btn btn-cta" style="margin-top: 1rem; width: 100%;">Generate Speech</button>
+            </form>
+
+            {% if speech_url %}
+            <div class="result-box">
+                <div class="result-label">Generated Audio</div>
+                <audio controls src="{{ speech_url }}"></audio>
+            </div>
+            {% endif %}
+
+            {% if tts_error %}
+            <div class="result-box error-box">
+                <div class="result-label">Error</div>
+                {{ tts_error }}
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+
+
+    <script>
+        
+        function showPanel(which) {
+            document.getElementById('panel-stt').classList.toggle('active', which === 'stt');
+            document.getElementById('panel-tts').classList.toggle('active', which === 'tts');
+            document.getElementById('btn-show-stt').classList.toggle('active', which === 'stt');
+            document.getElementById('btn-show-tts').classList.toggle('active', which === 'tts');
+        }
+
+        const initialPanel = document.body.getAttribute('data-show-panel') || 'stt';
+        showPanel(initialPanel);
+
+        const sttInput = document.getElementById('stt-input');
+        const sttMessage = document.getElementById('stt-message');
+        const sttDrop = document.getElementById('stt-drop');
+
+        if (sttInput) {
+            sttInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    sttMessage.textContent = `Selected: ${e.target.files[0].name}`;
+                }
+            });
+            ['dragenter', 'dragover'].forEach(evt => {
+                sttDrop.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    sttDrop.style.borderColor = 'var(--accent-primary)';
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                sttDrop.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    sttDrop.style.borderColor = 'rgba(61, 44, 53, 0.2)';
+                });
+            });
+        }
+
+        const recordBtn = document.getElementById('record-btn');
+        const recordBtnText = document.getElementById('record-btn-text');
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        if (recordBtn) {
+            recordBtn.addEventListener('click', async () => {
+                if (!isRecording) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        audioChunks = [];
+                        mediaRecorder = new MediaRecorder(stream);
+
+                        mediaRecorder.addEventListener('dataavailable', (e) => {
+                            if (e.data.size > 0) audioChunks.push(e.data);
+                        });
+
+                        mediaRecorder.addEventListener('stop', () => {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            const audioFile = new File([audioBlob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
+
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(audioFile);
+                            sttInput.files = dataTransfer.files;
+                            sttMessage.textContent = `Recorded: ${audioFile.name}`;
+
+                            stream.getTracks().forEach(track => track.stop());
+                        });
+
+                        mediaRecorder.start();
+                        isRecording = true;
+                        recordBtn.classList.add('recording');
+                        recordBtnText.textContent = 'Stop Recording';
+                    } catch (err) {
+                        alert('Could not access microphone. Please check browser permissions.');
+                        console.error(err);
+                    }
+                } else {
+                    mediaRecorder.stop();
+                    isRecording = false;
+                    recordBtn.classList.remove('recording');
+                    recordBtnText.textContent = 'Start Recording';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
